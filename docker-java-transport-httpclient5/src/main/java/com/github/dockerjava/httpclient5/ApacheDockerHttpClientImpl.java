@@ -57,8 +57,10 @@ class ApacheDockerHttpClientImpl implements DockerHttpClient {
         URI dockerHost,
         SSLConfig sslConfig,
         int maxConnections,
+        int maxConnectionsPerRoute,
         Duration connectionTimeout,
-        Duration responseTimeout
+        Duration responseTimeout,
+        Duration connectionKeepAlive
     ) {
         Registry<ConnectionSocketFactory> socketFactoryRegistry = createConnectionSocketFactoryRegistry(sslConfig, dockerHost);
 
@@ -110,13 +112,16 @@ class ApacheDockerHttpClientImpl implements DockerHttpClient {
         );
         connectionManager.setValidateAfterInactivity(TimeValue.NEG_ONE_SECOND);
         connectionManager.setMaxTotal(maxConnections);
-        connectionManager.setDefaultMaxPerRoute(maxConnections);
+        connectionManager.setDefaultMaxPerRoute(maxConnectionsPerRoute);
         RequestConfig.Builder defaultRequest = RequestConfig.custom();
         if (connectionTimeout != null) {
             defaultRequest.setConnectTimeout(connectionTimeout.toNanos(), TimeUnit.NANOSECONDS);
         }
         if (responseTimeout != null) {
             defaultRequest.setResponseTimeout(responseTimeout.toNanos(), TimeUnit.NANOSECONDS);
+        }
+        if (connectionKeepAlive != null) {
+            defaultRequest.setDefaultKeepAlive(connectionKeepAlive.toNanos(), TimeUnit.NANOSECONDS);
         }
 
         httpClient = HttpClients.custom()

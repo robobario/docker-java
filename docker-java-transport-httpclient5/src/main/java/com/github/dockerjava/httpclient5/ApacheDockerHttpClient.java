@@ -16,9 +16,13 @@ public final class ApacheDockerHttpClient extends ApacheDockerHttpClientImpl {
 
         private int maxConnections = Integer.MAX_VALUE;
 
+        private Integer maxConnectionsPerRoute = null;
+
         private Duration connectionTimeout;
 
         private Duration responseTimeout;
+
+        private Duration connectionKeepAlive;
 
         public Builder dockerHost(URI value) {
             this.dockerHost = Objects.requireNonNull(value, "dockerHost");
@@ -35,8 +39,18 @@ public final class ApacheDockerHttpClient extends ApacheDockerHttpClientImpl {
             return this;
         }
 
+        public Builder maxConnectionsPerRoute(int value) {
+            this.maxConnectionsPerRoute = value;
+            return this;
+        }
+
         public Builder connectionTimeout(Duration connectionTimeout) {
             this.connectionTimeout = connectionTimeout;
+            return this;
+        }
+
+        public Builder connectionKeepAlive(Duration connectionKeepAlive) {
+            this.connectionKeepAlive = connectionKeepAlive;
             return this;
         }
 
@@ -47,12 +61,14 @@ public final class ApacheDockerHttpClient extends ApacheDockerHttpClientImpl {
 
         public ApacheDockerHttpClient build() {
             Objects.requireNonNull(dockerHost, "dockerHost");
-            return new ApacheDockerHttpClient(dockerHost, sslConfig, maxConnections, connectionTimeout, responseTimeout);
+            int maxPerRoute = maxConnectionsPerRoute == null ? maxConnections : maxConnectionsPerRoute;
+            return new ApacheDockerHttpClient(dockerHost, sslConfig, maxConnections, maxPerRoute, connectionTimeout, responseTimeout,
+                connectionKeepAlive);
         }
     }
 
-    private ApacheDockerHttpClient(URI dockerHost, SSLConfig sslConfig, int maxConnections, Duration connectionTimeout,
-        Duration responseTimeout) {
-        super(dockerHost, sslConfig, maxConnections, connectionTimeout, responseTimeout);
+    private ApacheDockerHttpClient(URI dockerHost, SSLConfig sslConfig, int maxConnections, int maxConnectionsPerRoute,
+        Duration connectionTimeout, Duration responseTimeout, Duration connectionKeepAlive) {
+        super(dockerHost, sslConfig, maxConnections, maxConnectionsPerRoute, connectionTimeout, responseTimeout, connectionKeepAlive);
     }
 }
